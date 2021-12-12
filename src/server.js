@@ -1,5 +1,5 @@
 import http from "http";
-import { WebSocketServer } from "ws";
+import SocketIO from "socket.io";
 import express from "express";
 
 const app = express();
@@ -13,40 +13,49 @@ app.get("/*", (req, res) => res.redirect("/"));
 const handleListen = () =>
   console.log("Listening on ws and http://localhost:3000");
 
-const server = http.createServer(app);
-const wss = new WebSocketServer({ server });
+const httpServer = http.createServer(app);
+const wsServer = SocketIO(httpServer);
 
-const sockets = [];
+wsServer.on("connection", (socket) => {
+  socket.on("enter_room", (roomName, done) => {
+    console.log(roomName);
 
-// 없어도 ws 커넥션 연결은 됨.
-wss.on("connection", (socket) => {
-  sockets.push(socket);
-  socket["nickname"] = "Anon";
-  console.log("Connected to Browser ⭕");
-
-  socket.on("close", () => console.log("Disconnected to Browser ❌"));
-
-  socket.on("message", (message) => {
-    // console.log(message.toString());
-    const parsed = JSON.parse(message);
-
-    /* if (parsed.type === "new_message") {
-      sockets.forEach((each) => each.send(parsed.payload));
-    } else if (parsed.type === "nickname") {
-      console.log(parsed.payload);
-    } */
-    switch (parsed.type) {
-      case "new_message":
-        sockets.forEach((each) => each.send(`${socket.nickname}: ${parsed.payload}`));
-        break;
-      case "nickname":
-        socket["nickname"] = parsed.payload;
-        break;
-    }
-
-    // sockets.forEach((each) => each.send(message.toString()));
-    // socket.send(message.toString());
+    // fucntion은 마지막에 붙인다. 그렇게 하지 않으면 오류
+    // Back-End에서 실행 시키는 것이 아닌 Front-End에 있는 함수를 실행시켜 주는 것이다.
+    console.log(done());
   });
 });
 
-server.listen(3000, handleListen);
+httpServer.listen(3000, handleListen);
+// const wss = new WebSocketServer({ server });
+// const sockets = [];
+// 없어도 ws 커넥션 연결은 됨.
+// wss.on("connection", (socket) => {
+//   sockets.push(socket);
+//   socket["nickname"] = "Anon";
+//   console.log("Connected to Browser ⭕");
+
+//   socket.on("close", () => console.log("Disconnected to Browser ❌"));
+
+//   socket.on("message", (message) => {
+//     // console.log(message.toString());
+//     const parsed = JSON.parse(message);
+
+//     /* if (parsed.type === "new_message") {
+//       sockets.forEach((each) => each.send(parsed.payload));
+//     } else if (parsed.type === "nickname") {
+//       console.log(parsed.payload);
+//     } */
+//     switch (parsed.type) {
+//       case "new_message":
+//         sockets.forEach((each) => each.send(`${socket.nickname}: ${parsed.payload}`));
+//         break;
+//       case "nickname":
+//         socket["nickname"] = parsed.payload;
+//         break;
+//     }
+
+//     // sockets.forEach((each) => each.send(message.toString()));
+//     // socket.send(message.toString());
+//   });
+// });
