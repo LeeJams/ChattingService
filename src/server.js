@@ -16,14 +16,36 @@ const handleListen = () =>
 const httpServer = http.createServer(app);
 const wsServer = SocketIO(httpServer);
 
+function publicRoom() {
+  const {
+    sockets: {
+      adapter: { sids, rooms },
+    },
+  } = wsServer;
+  const publicRooms = [];
+  rooms.forEach((_, key) => {
+    if (sids.get(key) === undefined) publicRooms.push(key);
+  });
+  return publicRooms;
+}
+
 wsServer.on("connection", (socket) => {
+  socket["nickname"] = "Anonymous";
+
   socket.onAny((event) => {
+    /* 
+    adapter에서 주용한 2가지 
+    - rooms 어플리케이션의 모든 room을 볼 수 있다.
+    - socketId를 볼 수 있다.
+    */
+    console.log(wsServer.sockets.adapter);
     console.log(`Socket Event: ${event}`);
   });
+
   socket.on("enter_room", (roomName, done) => {
     // 방에 입장하는 Socket.Io에서 제공하는 기본 API
     socket.join(roomName);
-    console.log(socket.rooms);
+    // console.log(socket.rooms);
     done();
 
     // fucntion은 마지막에 붙인다. 그렇게 하지 않으면 오류
@@ -33,18 +55,26 @@ wsServer.on("connection", (socket) => {
     }, 15000); */
 
     // roomName에 있는 사람에게 전체 이벤트 발동
-    socket.to(roomName).emit("welcome");
+    socket.to(roomName).emit("welcome", socket.nickname);
+    wsServer.sockets.emit("room_change", publicRoom());
   });
+
   socket.on("disconnecting", () => {
     socket.rooms.forEach((room) => {
-      console.log(room);
-      socket.to(room).emit("bye");
+      // console.log(room);
+      socket.to(room).emit("bye", socket.nickname);
     });
   });
+
+  socket.on("disconnect", ()=> {
+    wsServer.sockets.emit("room_change", publicRoom());
+  })
+
   socket.on("new_message", (msg, room, done) => {
-    socket.to(room).emit("new_message", msg);
+    socket.to(room).emit("new_message", `${socket.nickname}: ${msg}`);
     done(msg);
   });
+  socket.on("nickname", (nickname) => (socket["nickname"] = nickname));
 });
 
 httpServer.listen(3000, handleListen);
