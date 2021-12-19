@@ -17,16 +17,38 @@ const httpServer = http.createServer(app);
 const wsServer = SocketIO(httpServer);
 
 wsServer.on("connection", (socket) => {
+  socket.onAny((event) => {
+    console.log(`Socket Event: ${event}`);
+  });
   socket.on("enter_room", (roomName, done) => {
-    console.log(roomName);
+    // 방에 입장하는 Socket.Io에서 제공하는 기본 API
+    socket.join(roomName);
+    console.log(socket.rooms);
+    done();
 
     // fucntion은 마지막에 붙인다. 그렇게 하지 않으면 오류
     // Back-End에서 실행 시키는 것이 아닌 Front-End에 있는 함수를 실행시켜 주는 것이다.
-    console.log(done());
+    /* setTimeout(() => {
+      done("hello from the backend");
+    }, 15000); */
+
+    // roomName에 있는 사람에게 전체 이벤트 발동
+    socket.to(roomName).emit("welcome");
+  });
+  socket.on("disconnecting", () => {
+    socket.rooms.forEach((room) => {
+      console.log(room);
+      socket.to(room).emit("bye");
+    });
+  });
+  socket.on("new_message", (msg, room, done) => {
+    socket.to(room).emit("new_message", msg);
+    done(msg);
   });
 });
 
 httpServer.listen(3000, handleListen);
+
 // const wss = new WebSocketServer({ server });
 // const sockets = [];
 // 없어도 ws 커넥션 연결은 됨.
