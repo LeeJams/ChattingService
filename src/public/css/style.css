@@ -1,0 +1,53 @@
+main {
+  padding: 0;
+}
+#welcome form, #room form {
+  margin: 10px auto;
+  background-color: #23387c;
+}
+#room form {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translate(-50%, 0);
+  width: 100%;
+}
+#welcome form input, #room form input {
+  margin: 0 auto;
+  width: 250px;
+  height: 30px;
+}
+#room form input {
+  width: 90%;
+}
+#welcome form div, #room form div {
+  text-align: center;
+  margin-top: 20px;
+}
+#welcome form div button, #room form div button {
+  width: 200px;
+}
+#welcome h3 {
+  text-align: center;
+  margin-top: 50px;
+}
+#welcome ul{
+  list-style: none;
+  padding: 0;
+}
+#welcome li{
+  width: 200px;
+  height: 50px;
+  border: 2px solid #23387c;
+  border-radius: 5px;
+  margin: 0 auto;
+  background-color: #23387c;
+  color: white;
+  font-weight: bold;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin-top: 20px;
+}

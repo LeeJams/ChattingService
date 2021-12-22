@@ -1,13 +1,66 @@
-// Socket.IO 는 기본적으로 룸을 제공하기 때문에 들어오고 나가는 것이 쉽다.
 const socket = io();
 
 const welcome = document.getElementById("welcome");
-const form = welcome.querySelector("form");
+
+const nickNameform = welcome.querySelector("form");
+const roomNameForm = welcome.querySelector("form:nth-child(2)");
+
 const room = document.getElementById("room");
 
 room.hidden = true;
-
 let roomName;
+let hasNickname = false;
+
+const nickname = nickNameform.querySelector("input");
+const roomname = roomNameForm.querySelector("input");
+
+function handleRoomListClick(event) {
+  if(!hasNickname){
+    alert("Please enter and save your nickname!");
+    return
+  }
+  roomName = event.target.textContent
+  socket.emit("enter_room", roomName, showRoom);
+}
+
+function handleRoomSubmit(event) {
+  event.preventDefault();
+
+  if(!roomname.value){
+    alert("Please enter room name!");
+    return
+  }else if(!hasNickname){
+    alert("Please enter and save your nickname!");
+    return
+  }
+
+  socket.emit("enter_room", roomname.value, showRoom);
+  roomName = roomname.value;
+  roomname.value = "";
+}
+
+function showRoom(newCount) {
+  console.log('newCount:' ,newCount);
+  welcome.hidden = true;
+  room.hidden = false;
+  const h3 = room.querySelector("h3");
+  h3.innerText = `Room ${roomName} (${newCount})`;
+  const msgForm = room.querySelector("#msg");
+  msgForm.addEventListener("submit", handleMessageSubmit);
+}
+
+function handleNickNameSubmit(event) {
+  event.preventDefault();
+  if(!nickname.value){
+    alert("Please enter your nickname!");
+    return
+  }
+  socket.emit("nickname", nickname.value);
+  hasNickname = true;
+}
+
+roomNameForm.addEventListener("submit", handleRoomSubmit);
+nickNameform.addEventListener("submit", handleNickNameSubmit);
 
 function addMessage(message) {
   const ul = room.querySelector("ul");
@@ -24,43 +77,20 @@ function handleMessageSubmit(event) {
   });
   input.value = "";
 }
-function handleNickNameSubmit(event) {
-  event.preventDefault();
-  const input = room.querySelector("#name input");
-  socket.emit("nickname", input.value);
-}
 
-function showRoom() {
-  welcome.hidden = true;
-  room.hidden = false;
-  const h3 = room.querySelector("h3");
-  h3.innerText = `Room ${roomName}`;
-  const msgForm = room.querySelector("#msg");
-  const nameForm = room.querySelector("#name");
-  msgForm.addEventListener("submit", handleMessageSubmit);
-  nameForm.addEventListener("submit", handleNickNameSubmit);
-}
-
-function handleRoomSubmit(event) {
-  event.preventDefault();
-  const input = form.querySelector("input");
-  socket.emit("enter_room", input.value, showRoom);
-  roomName = input.value;
-  input.value = "";
-}
-
-form.addEventListener("submit", handleRoomSubmit);
 
 socket.on("welcome", (nickname, newCount) => {
   const h3 = room.querySelector("h3");
   h3.innerText = `Room ${roomName} (${newCount})`;
   addMessage(`${nickname} Joined!!`);
 });
+
 socket.on("bye", (nickname, newCount) => {
   const h3 = room.querySelector("h3");
   h3.innerText = `Room ${roomName} (${newCount})`;
   addMessage(`${nickname} left!!`);
 });
+
 socket.on("new_message", addMessage);
 socket.on("room_change", (rooms) => {
   const roomList = welcome.querySelector("ul");
@@ -71,6 +101,7 @@ socket.on("room_change", (rooms) => {
   rooms.forEach(room => {
     const li = document.createElement("li");
     li.innerText = room;
+    li.addEventListener("click", handleRoomListClick);
     roomList.append(li);
   })
 });
