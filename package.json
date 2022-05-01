@@ -1,5 +1,5 @@
 {
-  "name": "Zoom-Clone",
+  "name": "ChattingService",
   "version": "1.0.0",
   "description": "노마드코더의 JS를 활용한 Zoom 을 클론코딩. WebSockets, SocketIO, WebRTC 등을 활용.",
   "repository": {
